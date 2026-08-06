@@ -17,8 +17,8 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     Image bottomPipeImage;
 
     //Initialization of Bird class (Hitbox of Pipe)
-    int birdX = boardHeight/8;
-    int birdY = boardWidth/2;
+    int birdX = boardHeight / 8;
+    int birdY = boardWidth / 2;
     int birdHeight = 34;
     int birdWidth = 24;
 
@@ -30,7 +30,8 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         int height = birdHeight;
         int width = birdWidth;
         Image img;
-        Bird (Image img) {
+
+        Bird(Image img) {
             this.img = img;
         }
     }
@@ -47,7 +48,8 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         int height = pipeHeight;
         int width = pipeWidth;
         Image img;
-        Pipe (Image img) {
+
+        Pipe(Image img) {
             this.img = img;
         }
     }
@@ -66,11 +68,28 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this); //Route key events to the class's KeyPressed/KeyTyped/KeyReleased
 
         //Load images
-        backgroundImage
+        backgroundImage = new ImageIcon(getClass().getResource("./name.png")).getImage();
+        topPipeImage = new ImageIcon(getClass().getResource("./name.png")).getImage();
+        bottomPipeImage = new ImageIcon(getClass().getResource("./name.png")).getImage();
+
+        //Bird and pipes
+        bird = new Bird(birdImage);
     }
 
+    // This method calls whenever it is needed to be redrawn (when closed and opening again)
+    public void painComponent(Graphics g) {
+        super.paintComponent(g);
+        draw(g);
+    }
+
+    //This draws/load the images in the game.
+    public void draw(Graphics g) {
+        //Background image
+        g.drawImage(backgroundImage, 0, 0, this.boardWidth, this.boardHeight, null);
+
+        //Bird image
+        g.drawImage(birdImage, birdX, birdY, birdWidth, birdHeight, null);
 
 
-
-
+    }
 }
