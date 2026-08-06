@@ -15,7 +15,17 @@ public class SettingMenu extends JPanel {
     //Variable Image
     Image imageBg;
 
+    //Check box for the "sounds on"
     JCheckBox soundCheck;
+
+    //Bird skins
+    static final BirdSkins[] BIRD_OPTIONS = {
+            new BirdSkins("Allen", "./Allen.png", "./Allenjump.wav"),
+            new BirdSkins("Ernesto", "./Ernesto.png", "./Ernestojump.wav")
+    };
+
+    //The list of the birds to select them as the skin
+    JComboBox<BirdSkins> birdSelector;
 
     SettingMenu() {
         //size of the panel that will be shown in the window
@@ -37,13 +47,25 @@ public class SettingMenu extends JPanel {
         title.setBounds(0, 100, boardWidth, 50);
         add(title);
 
-        //==Checking of the sound system==
+        //==Sound Toggle==
         soundCheck = new JCheckBox("Sound On");
         soundCheck.setFont(new Font("Arial", Font.PLAIN, 20));
         soundCheck.setFocusPainted(false);
         soundCheck.setSelected(true);
         soundCheck.setBounds(boardWidth/2 - 70, 300, 160, 30);
         add(soundCheck);
+
+        //==Bird skin selector==
+        JLabel birdLabel = new JLabel("Birb");
+        birdLabel.setFont(new Font("Arial", Font.ITALIC, 20));
+        birdLabel.setForeground(Color.white);
+        birdLabel.setBounds(boardWidth/2 - 60, 340, 80, 30);
+        add(birdLabel);
+
+        birdSelector = new JComboBox<>(BIRD_OPTIONS);
+        birdSelector.setFont(new Font("Arial", Font.BOLD, 16));
+        birdSelector.setBounds(boardWidth/2 - 10, 340, 160, 30);
+        add(birdSelector);
 
         //The structure for the back button to go back to the main menu
         backButton = new JButton("Back");
