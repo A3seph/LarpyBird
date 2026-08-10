@@ -75,4 +75,8 @@ public class SettingMenu extends JPanel {
         add(backButton);
     }
 
+    public BirdSkins getSelectedBird() {
+        return (BirdSkins) birdSelector.getSelectedItem();
+    }
+
 }
