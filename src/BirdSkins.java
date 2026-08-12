@@ -1,6 +1,5 @@
-//this class just carries the data around.
-
 public class BirdSkins {
+
     public final String name; //This is shown in the settings dropdown e.g "AllenBird"
     public final String imagePath; //e.g "./AllenBird.png"
     public final String jumpSoundPath; //e.g "./AllenBird.wav"

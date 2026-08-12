@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 
 public class SettingMenu extends JPanel {
 
@@ -20,8 +18,13 @@ public class SettingMenu extends JPanel {
 
     //Bird skins
     static final BirdSkins[] BIRD_OPTIONS = {
-            new BirdSkins("Allen", "./Allen.png", "./Allenjump.wav"),
-            new BirdSkins("Ernesto", "./Ernesto.png", "./Ernestojump.wav")
+            //new BirdSkins("Normal Birb", "./Birbs/flappybird.png", "./Birbs/flappy_sfx.wav"),
+            new BirdSkins("Allen", "Birbs/allen.png", "Birbs/allenjump.wav"),
+            new BirdSkins("Ernesto", "Birbs/ernesto.png", "Birbs/ernestojump.wav"),
+            new BirdSkins("Elijah", "Birbs/elijah.png", "Birbs/elijahjump1.wav"),
+            new BirdSkins("Gabriel", "Birbs/gabriel.png", "Birbs/gabrieljump.wav"),
+            new BirdSkins("Kelly", "Birbs/kelly.png", "Birbs/kellyjump.wav"),
+            new BirdSkins("Erns", "Birbs/erns.png", "Birbs/ernsjump.wav")
     };
 
     //The list of the birds to select them as the skin
@@ -33,11 +36,11 @@ public class SettingMenu extends JPanel {
         setLayout(null);
 
         //Image Background
-        try {
-            imageBg = ImageIO.read(getClass().getResource("./menubg.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //try {
+            //imageBg = ImageIO.read(getClass().getResource("./menubg.png"));
+        //} catch (IOException e) {
+           //e.printStackTrace();
+        //}
 
         //Title of the Settings
         JLabel title = new JLabel("Settings");
@@ -56,9 +59,9 @@ public class SettingMenu extends JPanel {
         add(soundCheck);
 
         //==Bird skin selector==
-        JLabel birdLabel = new JLabel("Birb");
+        JLabel birdLabel = new JLabel("Dirb");
         birdLabel.setFont(new Font("Arial", Font.ITALIC, 20));
-        birdLabel.setForeground(Color.white);
+        birdLabel.setForeground(Color.black);
         birdLabel.setBounds(boardWidth/2 - 60, 340, 80, 30);
         add(birdLabel);
 
@@ -75,8 +78,17 @@ public class SettingMenu extends JPanel {
         add(backButton);
     }
 
+    //public Birdskins so this class can be used in LarpyGame.java
     public BirdSkins getSelectedBird() {
         return (BirdSkins) birdSelector.getSelectedItem();
     }
 
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (imageBg != null) {
+            g.drawImage(imageBg, 0, 0, boardWidth, boardHeight, null);
+
+        }
+    }
 }

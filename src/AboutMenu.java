@@ -16,11 +16,11 @@ public class AboutMenu extends JPanel {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setLayout(null);
 
-        try {
-            imageBg = ImageIO.read(getClass().getResource("./menubg.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //try {
+            //imageBg = ImageIO.read(getClass().getResource("./menubg.png"));
+       // } catch (IOException e) {
+            //e.printStackTrace();
+       // }
 
         //Title of the Settings
         JLabel title = new JLabel("The Authors.");
@@ -31,7 +31,15 @@ public class AboutMenu extends JPanel {
         add(title);
 
         //An Array List for the Authors/Creators
-        String[] membersLabel = {"BORROMEO, Allen Joseph (Leader)", "Members:", "BULAN, Elijah", "BOX, Gabriel Alexander", "ARADO, Kelly", "CANILLO, Erns", "CESTINA, Prince Khian", "PANSACALA, Ernesto"};
+        String[] membersLabel = {"BORROMEO, Allen Joseph (Leader)",
+                "Members:",
+                "BULAN, Elijah",
+                "BOX, Gabriel Alexander",
+                "ARADO, Kelly",
+                "CANILLO, Erns",
+                "CESTINA, Prince Khian",
+                "PANSACALA, Ernesto"
+        };
         int y = 200;
         for (String name : membersLabel) {
             JLabel label = new JLabel(name);

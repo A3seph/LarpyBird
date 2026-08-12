@@ -40,19 +40,34 @@ public class Main {
             about.requestFocusInWindow();
         });
 
-        //When clicked in the main menu or returned in the main menu
+        //When clicked in the main menu or returned in the main menu (For SettingMenu)
         setting.backButton.addActionListener(e -> {
             cardLayout.show(mainPanel, "menu");
             menu.requestFocusInWindow();
         });
 
+        //When clicked in the main menu or returned in the main menu (For AboutMenu)
         about.backButton2.addActionListener(e -> {
             cardLayout.show(mainPanel, "menu");
             menu.requestFocusInWindow();
         });
 
+        //This will run the Larpy Bird when clicked "Play"
+        menu.playButton.addActionListener(e -> {
+            LarpyGame larpyGame = new LarpyGame(setting);
+                mainPanel.add(larpyGame, "game");
+                cardLayout.show(mainPanel, "game");
 
-        //This makes everything visible
+                larpyGame.setOnReturnToMenu(() -> {
+                    cardLayout.show(mainPanel, "menu");
+                    mainPanel.remove(larpyGame);
+                    menu.requestFocusInWindow();
+                });
+
+                SwingUtilities.invokeLater(larpyGame::requestFocus);
+        });
+
+        //This makes everything visible & everything work
         frame.add(mainPanel);
         frame.pack();
         menu.requestFocusInWindow();

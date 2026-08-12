@@ -25,7 +25,7 @@ public class MainMenu extends JPanel {
 
         //Image Background
         try {
-            imageBackground = ImageIO.read(getClass().getResource("./menubg.png"));
+            imageBackground = ImageIO.read(getClass().getResource("./ingamepngs/menubg.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -53,7 +53,7 @@ public class MainMenu extends JPanel {
         add(settingsButton);
 
 
-        //== Button for settings button ==
+        //== Button for about button ==
         aboutButton = new JButton("About");
         aboutButton.setFont(new Font("Arial", Font.PLAIN, 20));
         aboutButton.setFocusPainted(false);
