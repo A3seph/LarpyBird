@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+//extension so it can switch out.
 public class SettingMenu extends JPanel {
 
     //initialization size of the panel of the window
@@ -18,13 +19,14 @@ public class SettingMenu extends JPanel {
 
     //Bird skins
     static final BirdSkins[] BIRD_OPTIONS = {
-            //new BirdSkins("Normal Birb", "./Birbs/flappybird.png", "./Birbs/flappy_sfx.wav"),
-            new BirdSkins("Allen", "Birbs/allen.png", "Birbs/allenjump.wav"),
-            new BirdSkins("Ernesto", "Birbs/ernesto.png", "Birbs/ernestojump.wav"),
-            new BirdSkins("Elijah", "Birbs/elijah.png", "Birbs/elijahjump1.wav"),
-            new BirdSkins("Gabriel", "Birbs/gabriel.png", "Birbs/gabrieljump.wav"),
-            new BirdSkins("Kelly", "Birbs/kelly.png", "Birbs/kellyjump.wav"),
-            new BirdSkins("Erns", "Birbs/erns.png", "Birbs/ernsjump.wav")
+            new BirdSkins("Normal Birb", "./Birbs/flappybird.png", "Sounds/flappy_sfx.wav"),
+            new BirdSkins("Allen", "./Birbs/allen.png", "./Sounds/allenjump.wav"),
+            new BirdSkins("Ernesto", "./Birbs/ernesto.png", "./Sounds/ernestojump.wav"),
+            new BirdSkins("Elijah", "./Birbs/elijah.png", "./Sounds/elijahjump1.wav"),
+            new BirdSkins("Gabriel", "./Birbs/gabriel.png", "./Sounds/gabrieljump.wav"),
+            new BirdSkins("Kelly", "./Birbs/kelly.png", "./Sounds/kellyjump.wav"),
+            new BirdSkins("Erns", "./Birbs/erns.png", "./Sounds/ernsjump1.wav"),
+            new BirdSkins("Kio", "./Birbs/kio.jpg", "./Sounds/kiojump.wav")
     };
 
     //The list of the birds to select them as the skin

@@ -3,6 +3,7 @@ import java.awt.*;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+//extension, switch out
 public class MainMenu extends JPanel {
 
     //initialization size of the panel of the window
@@ -25,7 +26,7 @@ public class MainMenu extends JPanel {
 
         //Image Background
         try {
-            imageBackground = ImageIO.read(getClass().getResource("./ingamepngs/menubg.png"));
+            imageBackground = ImageIO.read(getClass().getResource("/ingamepngs/menubg.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

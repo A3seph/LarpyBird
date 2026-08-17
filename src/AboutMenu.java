@@ -3,8 +3,10 @@ import java.awt.*;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+//extension of jpanel, so it can be switched out
 public class AboutMenu extends JPanel {
 
+    //Self-explanatory of initialization
     JButton backButton2;
 
     int boardWidth = 360;
@@ -31,7 +33,8 @@ public class AboutMenu extends JPanel {
         add(title);
 
         //An Array List for the Authors/Creators
-        String[] membersLabel = {"BORROMEO, Allen Joseph (Leader)",
+        String[] membersLabel = {
+                "BORROMEO, Allen Joseph (Leader)",
                 "Members:",
                 "BULAN, Elijah",
                 "BOX, Gabriel Alexander",

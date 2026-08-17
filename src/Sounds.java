@@ -1,8 +1,8 @@
-
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
+//A class for a data storage of sounds
 public class Sounds {
         public static void playSound(String resourcePath) {
 

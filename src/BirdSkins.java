@@ -1,3 +1,4 @@
+//A class for a data Storage of the Bird skins.
 public class BirdSkins {
 
     public final String name; //This is shown in the settings dropdown e.g "AllenBird"

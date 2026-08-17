@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+//The main class of larpy bird.
 public class Main {
     public static void main(String[] args) throws Exception {
         int boardWidth = 360;
