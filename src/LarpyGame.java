@@ -2,7 +2,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Random;
-import javax.sound.sampled.Clip;
 import javax.swing.*;
 
 //extension of JPanel so it can be switched out, implemented action listener so it can call back to the main menu
@@ -69,14 +68,29 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
     //Initialization of FPS
     Timer gameLoop;
-    Timer placePipeTimer;
+    final int frameTimeMs = 1000 / 60;
 
+
+    //Pipes timing is perfectly timed in whenever it is resumed
+    //This method was needed because in the previous method
+    //We had a bug that pipes spawning to each other colliding
+    long pipeSpawnAccumulate = 0;
+    final int pipeSpawnInterval = 1500;
+
+    //Game over state
     boolean gameOver = false;
+
+    //Score state
     double score = 0;
 
     //Game state flags
     boolean gameStart = false; //False is turned off first. An implementation of game starting when paused
     boolean gamePaused = false; //False is turned off first. An implementation of game pausing
+
+    //Countdown-resume state
+    boolean countdownActive = false;
+    long countdownStart = 0;
+    final int countdownDuration = 3000; //3000 milliseconds = 3 seconds
 
     //This class is asked to swapped out without needing to know the cardLayout or JFrames itself.
     private Runnable onReturnToMenu;
@@ -114,9 +128,9 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         add(menuButton);
 
         //Load images
-        backgroundImage = new ImageIcon(getClass().getResource("./ingamepngs/example.png")).getImage();
-        topPipeImage = new ImageIcon(getClass().getResource("./ingamepngs/TopPipe.png")).getImage();
-        bottomPipeImage = new ImageIcon(getClass().getResource("./ingamepngs/BottomPipe.png")).getImage();
+        backgroundImage = new ImageIcon(getClass().getResource("ingamepics/example.png")).getImage();
+        topPipeImage = new ImageIcon(getClass().getResource("ingamepics/TopPipe.png")).getImage();
+        bottomPipeImage = new ImageIcon(getClass().getResource("ingamepics/BottomPipe.png")).getImage();
 
         //Bird skins images
         BirdSkins skins = (settings != null) ? settings.getSelectedBird(): SettingMenu.BIRD_OPTIONS[0];
@@ -127,24 +141,14 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
         //background music
 
-
         //Bird & pipe
         bird = new Bird(birdImage);
         pipes = new ArrayList<Pipe>();
 
-        //Game pipes timer (Spawning/Loading of Pipes)
-        placePipeTimer = new Timer(1500, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                placePipes();
-            }
-        });
-        placePipeTimer.start();
-
         //Game timer (fps): this is essentially our "frame rate" clock
         //Every 1000/60 milliseconds (~60 times a second) (FPS: 60)
         //It will call it's own actionPerformed() method below.
-        gameLoop = new Timer(1000/60, this);
+        gameLoop = new Timer(frameTimeMs, this);
         gameLoop.start();
     }
 
@@ -168,6 +172,18 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         pipes.add(bottomPipe);
     }
 
+    //This method only called on frames where the game is actively running, so pausing
+    //(or the resume countdown) simply freezes this clock instead of resetting or racing it
+    public void updatePipeSpawn() {
+        if (!gameStart || gamePaused ||gameOver) return;
+
+        pipeSpawnAccumulate += frameTimeMs;
+        if (pipeSpawnAccumulate >= pipeSpawnInterval) {
+            placePipes();
+            pipeSpawnAccumulate -= pipeSpawnInterval;
+        }
+    }
+
     // This method calls whenever it is needed to be redrawn (when closed and opening again)
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -176,6 +192,12 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
     //This draws/load the images in the game.
     public void draw(Graphics g) {
+
+        //Graphics for the countdown timer.
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        //this IO is just a FPS checker, so input this method and it prints out "draw" 60 times per second
         //IO.println("draw");
         //Background image (drawn)
         g.drawImage(backgroundImage, 0, 0, boardWidth, boardHeight, null);
@@ -205,16 +227,42 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
             g.drawString("Press SPACE to start", 60, boardHeight/2 - 40);
         }
 
-        //overlay when paused
+        //overlay when paused & countdown to resum
         if (gamePaused && !gameOver) {
             g.setColor(new Color(0, 0, 0, 150));
             g.fillRect(0, 0, boardWidth, boardHeight);
             g.setColor(Color.white);
-            g.setFont(new Font("Arial", Font.BOLD, 32));
-            g.drawString("PAUSED", boardWidth / 2 - 70, boardHeight / 2);
-            g.setFont(new Font("Arial", Font.PLAIN, 16));
-            g.drawString("Press P to resume", boardWidth / 2 - 75, boardHeight / 2 + 30);
+
+            //countdown timer and pause layer
+            if (countdownActive) {
+                drawCountdown(g2);
+            } else {
+                g.setFont(new Font("Arial", Font.BOLD, 32));
+                g.drawString("PAUSED", boardWidth / 2 - 70, boardHeight / 2);
+                g.setFont(new Font("Arial", Font.PLAIN, 16));
+                g.drawString("Press P to resume", boardWidth / 2 - 75, boardHeight / 2 + 30);
+            }
         }
+    }
+
+    private void drawCountdown(Graphics2D g2) {
+        long elapsed = System.currentTimeMillis() - countdownStart;
+        long remaining = Math.max(0, countdownDuration - elapsed);
+
+        int wholeSecondsLeft = (int) Math.ceil(remaining / 1000.0);
+        if (remaining <= 0) {
+            wholeSecondsLeft = 0;
+        }
+
+        String text = wholeSecondsLeft > 0 ? String.valueOf(wholeSecondsLeft) : "G O !";
+
+        int cx = boardWidth / 2;
+        int cy = boardHeight / 2;
+
+        g2.setFont(new Font("Arial", Font.BOLD, 44));
+        FontMetrics fontMetrics = g2.getFontMetrics();
+        int textWidth = fontMetrics.stringWidth(text);
+        g2.drawString(text, cx - textWidth / 2, cy + 16);
     }
 
     //class bird moving
@@ -239,7 +287,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
             if (!pipe.passed && bird.x > pipe.x + pipe.width) {
                 score += 0.5; //0.5 because there are two pipes. 0.5 + 0.5 = 1
                 pipe.passed = true;
-                IO.println(score);
+                //System.out.println(score);
 
                 if (pipe.img == topPipeImage && soundEnabled()) {
                     Sounds.playSound("./Sounds/sfx_point.wav");
@@ -267,14 +315,31 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
     }
 
+    //this method ticks the countdown
+    //also this method fixes the pipes spawning to each other colliding
+    private void updateCountdown() {
+        long elapsed = System.currentTimeMillis() - countdownStart;
+        if (elapsed >= countdownDuration) {
+            countdownActive = false;
+            gamePaused = false;
+        }
+    }
+
     //action performed: moving, drawing (repainting, painting), stopping the game
     @Override
     public void actionPerformed(ActionEvent e) {
-        move();
-        repaint();
+       if (countdownActive) {
+           updateCountdown();
+       } else {
+           move();
+           updatePipeSpawn();
+       }
+
+       repaint();
+
         if (gameOver) {
-            placePipeTimer.stop();
             gameLoop.stop();
+            countdownActive = false;
         }
     }
 
@@ -292,12 +357,13 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
                 score = 0;
                 gameStart = false;
                 gamePaused = false;
-                placePipeTimer.restart();
+                countdownActive = false;
+                pipeSpawnAccumulate = 0;
                 gameLoop.start();
                 return;
             }
 
-            if (gamePaused) return; //ignore jump input when paused
+            if (gamePaused || countdownActive) return; //ignore jump input when paused or counting down
 
             if (!gameStart) {
                 gameStart = true; //first press wakes the bird (jumps the bird out)
@@ -312,10 +378,17 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         }
 
         if (e.getKeyCode() == KeyEvent.VK_P) {
-            if (gameStart && !gameOver) {
-                gamePaused = !gamePaused;
-
-                repaint();
+            if (gameStart && !gameOver && !countdownActive) {
+                //pausing: this freezes the game immediately.
+                if (!gamePaused) {
+                    gamePaused = true;
+                    repaint();
+                } else {
+                    //resuming: starts a 3 - 1 countdown
+                    countdownActive = true;
+                    countdownStart = System.currentTimeMillis();
+                    repaint();
+                }
             }
         }
     }
@@ -329,6 +402,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     //return to menu class
     private void returnToMenu() {
         gameLoop.stop();
+        countdownActive = false;
         if (onReturnToMenu != null) {
             onReturnToMenu.run();
         }

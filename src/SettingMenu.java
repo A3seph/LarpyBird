@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 //extension so it can switch out.
 public class SettingMenu extends JPanel {
@@ -20,7 +22,7 @@ public class SettingMenu extends JPanel {
     //Bird skins
     static final BirdSkins[] BIRD_OPTIONS = {
             new BirdSkins("Normal Birb", "./Birbs/flappybird.png", "Sounds/flappy_sfx.wav"),
-            new BirdSkins("Allen", "./Birbs/allen.png", "./Sounds/allenjump.wav"),
+            new BirdSkins("Allen", "./Birbs/allen.png", "./Sounds/allendorya.wav"),
             new BirdSkins("Ernesto", "./Birbs/ernesto.png", "./Sounds/ernestojump.wav"),
             new BirdSkins("Elijah", "./Birbs/elijah.png", "./Sounds/elijahjump1.wav"),
             new BirdSkins("Gabriel", "./Birbs/gabriel.png", "./Sounds/gabrieljump.wav"),
@@ -38,11 +40,11 @@ public class SettingMenu extends JPanel {
         setLayout(null);
 
         //Image Background
-        //try {
-            //imageBg = ImageIO.read(getClass().getResource("./menubg.png"));
-        //} catch (IOException e) {
-           //e.printStackTrace();
-        //}
+        try {
+            imageBg = ImageIO.read(getClass().getResource("./ingamepics/background1.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //Title of the Settings
         JLabel title = new JLabel("Settings");

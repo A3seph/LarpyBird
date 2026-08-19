@@ -26,7 +26,7 @@ public class MainMenu extends JPanel {
 
         //Image Background
         try {
-            imageBackground = ImageIO.read(getClass().getResource("/ingamepngs/menubg.png"));
+            imageBackground = ImageIO.read(getClass().getResource("./ingamepics/MenuBackground.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
