@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Random;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 
 //extension of JPanel so it can be switched out, implemented action listener so it can call back to the main menu
@@ -49,6 +50,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         int width = pipeWidth;
         Image img;
         boolean passed = false;
+        boolean isTop = false;
 
         Pipe(Image img) {
             this.img = img;
@@ -70,18 +72,32 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     Timer gameLoop;
     final int frameTimeMs = 1000 / 60;
 
-
     //Pipes timing is perfectly timed in whenever it is resumed
     //This method was needed because in the previous method
     //We had a bug that pipes spawning to each other colliding
     long pipeSpawnAccumulate = 0;
-    final int pipeSpawnInterval = 1500;
+    int pipeSpawnInterval = 1500;
 
     //Game over state
     boolean gameOver = false;
 
     //Score state
     double score = 0;
+
+    //high score state
+    int highScore = 0;
+
+    //Difficulty states, 3 levels, capped at only ON level 3
+    //each level has a designated score, which is 50 score to level up
+    int level = 1;
+    final int maxLevel = 3;
+    final int scorePerLevel = 50;
+
+    //Index 0 = level 1, 1 = level 2, 2 = level 3
+    final int[] lvlSpeed = {-3, -4, -4}; //level speed
+    final int[] lvlPipeGap = {4, 6, 7}; //bigger number = small gaps of pipes
+    final int[] lvlSpawnInterval = {1500, 1100, 900}; //Milliseconds of pipes spawning
+    final int[] lvlPipeOffset = {0, 0, 50}; //misaligning the pipes so it will be harder for players (only at level 3)
 
     //Game state flags
     boolean gameStart = false; //False is turned off first. An implementation of game starting when paused
@@ -92,16 +108,16 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     long countdownStart = 0;
     final int countdownDuration = 3000; //3000 milliseconds = 3 seconds
 
-    //This class is asked to swapped out without needing to know the cardLayout or JFrames itself.
+    //This method is asked to swapped out without needing to know the cardLayout or JFrames itself.
     private Runnable onReturnToMenu;
 
-    //private class for this class: settings
+    //private method for this class: settings
     private SettingMenu settings;
 
-    //private class for this class: background music
-    //private Clip bgMusic;
+    //private method for this class: background music
+    private Clip bgMusic;
 
-    //private class for this class: jump sound effect
+    //private method for this class: jump sound effect
     private String jumpSoundPath;
 
     //Initialization for menu button
@@ -129,8 +145,8 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
         //Load images
         backgroundImage = new ImageIcon(getClass().getResource("ingamepics/example.png")).getImage();
-        topPipeImage = new ImageIcon(getClass().getResource("ingamepics/TopPipe.png")).getImage();
-        bottomPipeImage = new ImageIcon(getClass().getResource("ingamepics/BottomPipe.png")).getImage();
+        topPipeImage = new ImageIcon(getClass().getResource("ingamepics/topPipe.png")).getImage();
+        bottomPipeImage = new ImageIcon(getClass().getResource("ingamepics/bottomPipe.png")).getImage();
 
         //Bird skins images
         BirdSkins skins = (settings != null) ? settings.getSelectedBird(): SettingMenu.BIRD_OPTIONS[0];
@@ -139,8 +155,11 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         //The birds sound jumping effect
         jumpSoundPath  = skins.jumpSoundPath;
 
-        //background music
+        //This pull whatever is the main highest score is
+        highScore = ScoreManager.getHighScore();
 
+        //background music
+        bgMusic = Sounds.loadLoopingClip("./Sounds/Larpy_Birb_Theme.wav");
         //Bird & pipe
         bird = new Bird(birdImage);
         pipes = new ArrayList<Pipe>();
@@ -161,14 +180,26 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         // 0 -> -128 (pipeHeight/4)
         // 1 -> -128 - 256 (pipeHeight/4 - pipeHeight/2) = -3/4 pipeHeight
         int randomPipeY = (int) (pipeY - pipeHeight/4 - Math.random()*(pipeHeight/2));
-        int openSpace = boardHeight/4;
+        //this method only tighten the gap between top and bottom pipe, making it harder each level.
+        int gapDivisor = lvlPipeGap[level - 1];
+        //Open space between top and bottome pipe
+        int openSpace = boardHeight/gapDivisor;
 
         Pipe topPipe = new Pipe(topPipeImage);
         topPipe.y = randomPipeY;
+        topPipe.isTop = true;
         pipes.add(topPipe);
 
         Pipe bottomPipe = new Pipe(bottomPipeImage);
         bottomPipe.y = topPipe.y + pipeHeight + openSpace;
+
+        //FOR LEVEL 3 ONLY (Misaligning)
+        int maxOffset = lvlPipeOffset[level - 1];
+        if (maxOffset > 0) {
+            int Offset = random.nextInt(maxOffset + 1);
+            boolean shiftRight = random.nextBoolean();
+            bottomPipe.x = topPipe.x + (shiftRight ? Offset : -Offset);
+        }
         pipes.add(bottomPipe);
     }
 
@@ -183,6 +214,17 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
             pipeSpawnAccumulate -= pipeSpawnInterval;
         }
     }
+
+    private void updateLevel() {
+        int newLevel = Math.min(maxLevel, 1 + ((int) score) / scorePerLevel);
+
+        if (newLevel != level) {
+            level = newLevel;
+            velocityX = lvlSpeed[level - 1];
+            pipeSpawnInterval = lvlSpawnInterval[level - 1];
+        }
+    }
+
 
     // This method calls whenever it is needed to be redrawn (when closed and opening again)
     public void paintComponent(Graphics g) {
@@ -213,12 +255,23 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
         //score label
         g.setColor(Color.black);
-        g.setFont(new Font("Arial,", Font.ROMAN_BASELINE, 20));
+        g.setFont(new Font("Arial", Font.PLAIN, 25));
         if (gameOver) {
-            g.drawString("Game over, easy skill issue: " + String.valueOf((int)score), 10, 35);
-        }
-        else {
+            g.drawString("Game over, skill issue: " + String.valueOf((int)score), 10, 35);
+            g.setFont(new Font("Arial", Font.PLAIN, 16));
+
+            //High score label
+            if ((int) score >= highScore) {
+                g.drawString("NEW BEST!", 10, 60);
+            } else {
+                g.drawString("BEST! " + highScore, 10, 60);
+            }
+            g.drawString("Press SPACE to restart", 10, boardHeight - 20);
+
+        } else {
             g.drawString(String.valueOf((int) score), 10, 35);
+            g.setFont(new Font("Arial", Font.PLAIN, 16));
+            g.drawString("Best: " + highScore, 10, 60);
         }
 
         //a hint for starting the game
@@ -236,12 +289,15 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
             //countdown timer and pause layer
             if (countdownActive) {
                 drawCountdown(g2);
+                g.setFont(new Font("Arial", Font.PLAIN, 16));
+                g.drawString("Do your best lmao, get ready noob", boardWidth / 2 - 90, boardHeight / 2 + 30);
             } else {
                 g.setFont(new Font("Arial", Font.BOLD, 32));
                 g.drawString("PAUSED", boardWidth / 2 - 70, boardHeight / 2);
                 g.setFont(new Font("Arial", Font.PLAIN, 16));
                 g.drawString("Press P to resume", boardWidth / 2 - 75, boardHeight / 2 + 30);
             }
+
         }
     }
 
@@ -289,20 +345,36 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
                 pipe.passed = true;
                 //System.out.println(score);
 
-                if (pipe.img == topPipeImage && soundEnabled()) {
+                if (pipe.isTop && soundEnabled()) {
                     Sounds.playSound("./Sounds/sfx_point.wav");
                 }
             }
 
-            //conditional if bird colliosned to the pipes
+            //conditional if bird collide to the pipes
             if (collision(bird, pipe)) {
                 gameOver = true;
+                if (bgMusic != null) {
+                    stopMusic();
+                }
             }
         }
+
+        //check if score has crossed a level threshold and ramp up difficulty
+        updateLevel();
 
         //falling off will come to gameOver true
         if (bird.y > boardHeight) {
             gameOver = true;
+            if (bgMusic != null) {
+                stopMusic();
+            }
+        }
+
+        if (gameOver) {
+            if ((int) score > highScore) {
+                highScore = (int) score;
+            }
+            ScoreManager.updateHighScore((int) score);
         }
     }
 
@@ -322,6 +394,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         if (elapsed >= countdownDuration) {
             countdownActive = false;
             gamePaused = false;
+            startMusic();
         }
     }
 
@@ -359,7 +432,15 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
                 gamePaused = false;
                 countdownActive = false;
                 pipeSpawnAccumulate = 0;
+                level = 1;
+                velocityX = lvlSpeed[0];
+                pipeSpawnInterval = lvlSpawnInterval[0];
                 gameLoop.start();
+                if (bgMusic != null) {
+                    stopMusic();
+                    bgMusic.setFramePosition(0);
+                }
+
                 return;
             }
 
@@ -367,6 +448,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
             if (!gameStart) {
                 gameStart = true; //first press wakes the bird (jumps the bird out)
+                startMusic();
             }
 
             velocityY = -9; //the height of bird jump
@@ -382,6 +464,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
                 //pausing: this freezes the game immediately.
                 if (!gamePaused) {
                     gamePaused = true;
+                    stopMusic();
                     repaint();
                 } else {
                     //resuming: starts a 3 - 1 countdown
@@ -399,10 +482,26 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
         return settings == null || settings.soundCheck.isSelected();
     }
 
+    //starting the music (looping continuously)
+    //Null so if the wav is missing, it does nothing same as the stopMusic
+    private void startMusic() {
+        if(bgMusic != null) {
+            bgMusic.loop(Clip.LOOP_CONTINUOUSLY);
+        }
+    }
+
+    //once dead, stop the music
+    private void stopMusic() {
+        if(bgMusic != null) {
+            bgMusic.stop();
+        }
+    }
+
     //return to menu class
     private void returnToMenu() {
         gameLoop.stop();
         countdownActive = false;
+        stopMusic();
         if (onReturnToMenu != null) {
             onReturnToMenu.run();
         }
