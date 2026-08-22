@@ -32,7 +32,7 @@ public class MainMenu extends JPanel {
         }
 
         //==Title==
-        JLabel title = new JLabel("Larpy Bird");
+        JLabel title = new JLabel("Larpy Birb");
         title.setFont(new Font("Arial", Font.BOLD, 40));
         title.setForeground(Color.black);
         title.setHorizontalAlignment(SwingConstants.CENTER);
