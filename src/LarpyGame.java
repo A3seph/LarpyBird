@@ -19,7 +19,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     Image bottomPipeImage;
 
     //Initialization of Bird class (Hitbox of Bird)
-    int birdX = boardHeight / 8;
+    int birdX = boardHeight / 9;
     int birdY = boardWidth / 2;
     int birdWidth = 34;
     int birdHeight = 24;
@@ -91,13 +91,21 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
     //each level has a designated score, which is 50 score to level up
     int level = 1;
     final int maxLevel = 3;
-    final int scorePerLevel = 50;
+    final int scorePerLevel = 10;
+            ;
 
     //Index 0 = level 1, 1 = level 2, 2 = level 3
-    final int[] lvlSpeed = {-3, -4, -4}; //level speed
-    final int[] lvlPipeGap = {4, 6, 7}; //bigger number = small gaps of pipes
-    final int[] lvlSpawnInterval = {1500, 1100, 900}; //Milliseconds of pipes spawning
-    final int[] lvlPipeOffset = {0, 0, 50}; //misaligning the pipes so it will be harder for players (only at level 3)
+
+    /*take note that the speed and the MS of spawning of pipes have a difference
+      when having more speed and the MS has more than it's usual spawning time
+      the spawning of pipes will casually delay of spawning making them easier
+      to pass through
+    */
+
+    final int[] lvlSpeed = {-3, -5, -6}; //level speed
+    final int[] lvlPipeGap = {4, 5, 7}; //bigger number = small gaps of pipes
+    final int[] lvlSpawnInterval = {1500, 1000, 900}; //Milliseconds of pipes spawning
+    final int[] lvlPipeOffset = {0, 40, 75}; //misaligning the pipes so it will be harder for players (only at level 3)
 
     //Game state flags
     boolean gameStart = false; //False is turned off first. An implementation of game starting when paused
@@ -262,9 +270,9 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
 
             //High score label
             if ((int) score >= highScore) {
-                g.drawString("NEW BEST!", 10, 60);
+                g.drawString("NEW BEST:", 10, 60);
             } else {
-                g.drawString("BEST! " + highScore, 10, 60);
+                g.drawString("BEST: " + highScore, 10, 60);
             }
             g.drawString("Press SPACE to restart", 10, boardHeight - 20);
 
@@ -290,7 +298,7 @@ public class LarpyGame extends JPanel implements ActionListener, KeyListener {
             if (countdownActive) {
                 drawCountdown(g2);
                 g.setFont(new Font("Arial", Font.PLAIN, 16));
-                g.drawString("Do your best lmao, get ready noob", boardWidth / 2 - 90, boardHeight / 2 + 30);
+                g.drawString("Do your best, get ready noob", boardWidth / 2 - 105, boardHeight / 2 + 30);
             } else {
                 g.setFont(new Font("Arial", Font.BOLD, 32));
                 g.drawString("PAUSED", boardWidth / 2 - 70, boardHeight / 2);
