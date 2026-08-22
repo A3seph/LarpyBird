@@ -1,0 +1,95 @@
+@startuml
+start
+
+:Launch Application;
+:Initialize Window & CardLayout;
+
+repeat
+  :Display Main Menu;
+
+  if (User Action?) then (Settings)
+    :Open Settings Menu;
+    repeat
+      :Change Sound Toggle / Bird Skin;
+    backward:Update Selection;
+    repeat while (User clicks "Back"?) is (No)
+    :Return to Main Menu;
+
+  elseif (User Action?) then (About)
+    :Open About Menu;
+    repeat
+      if (Click Author Name?) then (Yes)
+        :Display Author Image & Play Sound Effect;
+      endif
+    repeat while (User clicks "Back"?) is (No)
+    :Return to Main Menu;
+
+  elseif (User Action?) then (Play Game)
+    :Instantiate Game with Selected Settings;
+    :Load High Score & Audio Resources;
+    :Display Idle Game Screen;
+
+    if (User Action?) then (Click "Menu")
+      :Stop Game Loop;
+      :Return to Main Menu;
+    else (Press SPACE)
+      :Set gameStart = true;
+      :Start Background Music Loop;
+
+      repeat
+        :60 FPS Timer Tick;
+
+        if (Is Game Paused?) then (Yes)
+          if (Countdown Active?) then (Yes)
+            :Tick 3s Countdown;
+            if (Countdown <= 0?) then (Yes)
+              :Unpause & Resume Music;
+            endif
+          else (No)
+            :Render PAUSED Overlay;
+            if (Press 'P'?) then (Yes)
+              :Start 3s Resume Countdown;
+            endif
+          endif
+        else (Active Gameplay)
+          :Apply Gravity to Bird;
+          :Shift Pipes Left & Accumulate Spawn Time;
+
+          if (Spawn Interval Reached?) then (Yes)
+            :Place New Pipe Pair;
+          endif
+
+          if (Bird Passed Pipe?) then (Yes)
+            :Increment Score & Play Point SFX;
+          endif
+
+          if (Press SPACE?) then (Yes)
+            :Set Upward Velocity & Play Jump SFX;
+          elseif (Press 'P'?) then (Yes)
+            :Set Game Paused & Stop Music;
+          endif
+
+          if (Collision or Off-Screen?) then (Yes)
+            :Set gameOver = true;
+            :Stop Music & Timer;
+            :Update High Score in ScoreManager;
+          endif
+        endif
+
+        :Repaint Game Screen;
+
+      repeat while (Is Game Over?) is (No)
+
+      :Render Game Over Screen;
+
+      if (User Action?) then (Press SPACE)
+        :Reset Bird Position, Pipes, & Score;
+      else ("Menu" Button)
+        :Remove Game Instance;
+      endif
+    endif
+  endif
+
+repeat while (Application Running?)
+stop
+@enduml
