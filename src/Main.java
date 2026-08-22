@@ -8,7 +8,7 @@ public class Main {
         int boardHeight = 640;
 
         // Basic window setup
-        JFrame frame = new JFrame("Larpy Bird");
+        JFrame frame = new JFrame("Larpy Birb");
         frame.setVisible(true);
         frame.setSize(boardWidth, boardHeight);
         frame.setLocationRelativeTo(null);
