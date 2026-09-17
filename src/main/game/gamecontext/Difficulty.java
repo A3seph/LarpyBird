@@ -12,8 +12,8 @@ public class Difficulty {
     private Difficulty() {}
 
     public static final int Max_Level = 5;
-    public static final int Score_Per_Level = 10;
-    public static final int Mode_Switch_Interval = 5;
+    public static final int Score_Per_Level = 40;
+    public static final int Mode_Switch_Interval = 20;
 
     //Bird mode difficulties
     public static final int[] Bird_Speed = {-3, -4, -5, -6, -6};
