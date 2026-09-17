@@ -1,0 +1,63 @@
+@startuml LarpyBirb_FlowDiagram
+start
+:Launch Main.java;
+:Show Main Menu;
+
+if (Button clicked?) then (Settings)
+    :Show Settings Menu;
+    :Toggle Sound On/Off;
+    :Click Back;
+    stop
+elseif () then (About)
+    :Show About Menu;
+    :Click Developer Name;
+    :Show Face + Play Sound;
+    :Click Back;
+    stop
+elseif () then (Exit)
+    :System.exit(0);
+    stop
+else (Play)
+    :Create Game panel;
+    :Enter BirdMode;
+endif
+
+repeat
+    :Game loop tick (Timer @ 60fps);
+    if (Countdown active?) then (yes)
+        :Update countdown;
+    elseif (Game paused?) then (yes)
+        :Skip update;
+    else (no)
+        :Update current GameMode;
+        :Move bird/spider, obstacles;
+        :Check collisions;
+
+        if (Collision detected?) then (yes)
+            :Set gameOver = true;
+            :Stop music;
+            :Update high score;
+        else (no)
+            :Increase score;
+            :Update level from score;
+            :Check mode switch threshold;
+            if (Threshold crossed?) then (yes)
+                :Exit current mode;
+                :Enter new mode (Bird <-> Spider);
+            endif
+        endif
+    endif
+    :repaint();
+
+    if (Key = P pressed?) then (yes)
+        :Toggle Pause / Countdown;
+    elseif (Key = SPACE pressed & Game Over?) then (yes)
+        :Restart game;
+    elseif (Menu button clicked?) then (yes)
+        :Return to Main Menu;
+        stop
+    endif
+repeat while (Game window still open?) is (yes)
+->no;
+stop
+@enduml
