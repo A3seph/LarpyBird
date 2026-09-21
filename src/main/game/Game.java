@@ -37,11 +37,15 @@ public class Game extends JPanel implements ActionListener, KeyListener {
 
     //Images
     Image birdImage;
-    Image backgroundImage;
     Image topPipeImage;
     Image bottomPipeImage;
     Image spiderImage;
     Image spikeImage;
+
+    //Images for background (Per level)
+    Image[] backgroundImage;
+    Image currentBackgroundImage;
+    int lastBgLevel = -1;
 
     //Timer states for pipe timing and game looping
     Timer gameLoop;
@@ -54,6 +58,10 @@ public class Game extends JPanel implements ActionListener, KeyListener {
     boolean countdownActive = false;
     long countdownStart = 0;
     final int countdownDuration = 3000;
+
+    //Tutorial state
+    boolean showTutorial = false;
+    private boolean pausedBeforeTutorial = false;
 
     //Music states
     private boolean musicStarted = false;
@@ -91,12 +99,21 @@ public class Game extends JPanel implements ActionListener, KeyListener {
         add(menuButton);
 
         //Images
-        backgroundImage = new ImageIcon(getClass().getResource("/ingamepics/example.png")).getImage();
         topPipeImage = new ImageIcon(getClass().getResource("/ingamepics/topPipe.png")).getImage();
         bottomPipeImage = new ImageIcon(getClass().getResource("/ingamepics/bottomPipe.png")).getImage();
-        birdImage = new ImageIcon(getClass().getResource("/images/flappybird.png")).getImage();
+        birdImage = new ImageIcon(getClass().getResource("/images/dihragon.png")).getImage();
         spiderImage = new ImageIcon(getClass().getResource("/images/spider.png")).getImage();
         spikeImage = new ImageIcon(getClass().getResource("/images/spikes.png")).getImage();
+
+        //Images background (Per Level)
+        backgroundImage = new Image[] {
+                new ImageIcon(getClass().getResource("/ingamepics/level1_city.png")).getImage(),
+                new ImageIcon(getClass().getResource("/ingamepics/level2_wowcube.png")).getImage(),
+                new ImageIcon(getClass().getResource("/ingamepics/level3_atlantis.png")).getImage(),
+                new ImageIcon(getClass().getResource("/ingamepics/level4_cavemines.png")).getImage(),
+                new ImageIcon(getClass().getResource("/ingamepics/level5_city(red).png")).getImage(),
+        };
+        currentBackgroundImage = backgroundImage[0];
 
         //Sound
         bgMusic = Sounds.loadLoopingClip("/sounds/Larpy_Birb_Theme.wav");
@@ -115,7 +132,7 @@ public class Game extends JPanel implements ActionListener, KeyListener {
         gameLoop.start();
     }
 
-
+    //Switiching modes
     private void switchMode(GameMode newMode) {
         if (currentMode != null) {
             currentMode.onExit();
@@ -133,13 +150,33 @@ public class Game extends JPanel implements ActionListener, KeyListener {
                 : new BirdMode(birdImage, topPipeImage, bottomPipeImage, customFont);
     }
 
+    //Swaps the background whenever the level has changed since the last check
+    private void updateBackgroundForLevel() {
+        if (ctx.level != lastBgLevel) {
+            int index = (ctx.level - 1) % backgroundImage.length;
+            currentBackgroundImage = backgroundImage[index];
+            lastBgLevel = ctx.level;
+        }
+    }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (bgMusic != null && musicStarted) {
+            boolean soundOn = settings.musicCheck.isSelected();
+            if (!soundOn && bgMusic.isRunning()) {
+                stopMusic();
+            } else if (soundOn && !bgMusic.isRunning() && !gamePaused
+                    && !countdownActive && !showTutorial && !currentMode.isGameOver()) {
+                startMusic();
+            }
+        }
+
         if (countdownActive) {
             updateCountdown();
         } else if (!gamePaused) {
             ctx.level = Difficulty.levelForScore(ctx.score);
+            updateBackgroundForLevel();
             currentMode.update(ctx);
 
             GameMode expectedMode = resolverForMode(ctx.score);
@@ -163,11 +200,13 @@ public class Game extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g.drawImage(backgroundImage, 0, 0, boardWidth, boardHeight, null);
+        g.drawImage(currentBackgroundImage, 0, 0, boardWidth, boardHeight, null);
 
         currentMode.draw(g2, ctx);
 
-        if (gamePaused && !currentMode.isGameOver()) {
+        if (showTutorial) {
+            drawTutorial(g2);
+        } else if (gamePaused && !currentMode.isGameOver()) {
             g.setColor(new Color(0, 0, 0, 150));
             g.fillRect(0, 0, boardWidth, boardHeight);
             g.setColor(Color.white);
@@ -175,14 +214,55 @@ public class Game extends JPanel implements ActionListener, KeyListener {
             if (countdownActive) {
                 drawCountdown(g2);
                 g.setFont(customFont.deriveFont(Font.BOLD, 16f));
-                g.drawString("Do your best, get ready noob", boardWidth / 2 - 105, boardHeight / 2 + 30);
+                g.drawString("Do your best, get ready noob", boardWidth / 2 - 130, boardHeight / 2 + 30);
             } else {
                 g.setFont(customFont.deriveFont(Font.BOLD, 32f));
                 g.drawString("PAUSED", boardWidth / 2 - 70, boardHeight / 2);
                 g.setFont(customFont.deriveFont(Font.BOLD, 16f));
-                g.drawString("Press P to resume", boardWidth / 2 - 75, boardHeight / 2 + 30);
+                g.drawString("Press P to resume", boardWidth / 2 - 85, boardHeight / 2 + 30);
             }
         }
+    }
+
+    //The Tutorial Drawing (steps on how to play)
+    private void drawTutorial(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRect(0, 0, boardWidth, boardHeight);
+        g2.setColor(Color.red);
+
+        g2.setFont(customFont.deriveFont(Font.BOLD, 32f));
+        String title = "HOW TO PLAY";
+        FontMetrics titleMetrics = g2.getFontMetrics();
+        g2.drawString(title, boardWidth / 2 - titleMetrics.stringWidth(title) / 2, boardHeight / 2 - 170);
+
+        String[] steps = {
+                "1. Press SPACE to flap / jump / teleport (Spider)",
+                "2. Avoid hitting the pipes, floor, or ceiling.",
+                "3. The mode switches as your score climbs:",
+                "   Modes has a designated score to switch: 15",
+                "      - Bird mode: fly through the pipe gaps.",
+                "      - Spider mode: dodge the spikes instead.",
+                "4. Survive longer to raise your score and level.",
+                "5. Each level is added when hit 30 score.",
+                "6. Press P to pause and resume the game.",
+                "7. Press ENTER to restart after game over.",
+                "8. Press H anytime to open or close this tutorial."
+        };
+
+        g2.setFont(customFont.deriveFont(Font.PLAIN, 18f));
+        FontMetrics stepMetrics = g2.getFontMetrics();
+        int startY = boardHeight / 2 - 110;
+        int lineHeight = 30;
+        for (int i = 0; i < steps.length; i++) {
+            String line = steps[i];
+            int lineWidth = stepMetrics.stringWidth(line);
+            g2.drawString(line, boardWidth / 2 - lineWidth / 2, startY + i * lineHeight);
+        }
+
+        g2.setFont(customFont.deriveFont(Font.ITALIC, 14f));
+        String closeHint = "Press H or ESC to close";
+        FontMetrics hintMetrics = g2.getFontMetrics();
+        g2.drawString(closeHint, boardWidth / 2 - hintMetrics.stringWidth(closeHint) / 2, boardHeight / 2 + 220);
     }
 
     //The Countdown Drawing
@@ -216,11 +296,27 @@ public class Game extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
 
-        if (code == KeyEvent.VK_SPACE) {
+        if (code == KeyEvent.VK_H) {
+            toggleTutorial();
+            return;
+        }
+
+        if (showTutorial) {
+            if (code == KeyEvent.VK_ESCAPE) {
+                toggleTutorial();
+            }
+            return;
+        }
+
+        if (code == KeyEvent.VK_ENTER) {
             if (currentMode.isGameOver()) {
                 restart();
                 return;
             }
+        }
+
+        if (code == KeyEvent.VK_SPACE) {
+            if (currentMode.isGameOver()) return;
 
             if (gamePaused || countdownActive) return;
 
@@ -245,6 +341,8 @@ public class Game extends JPanel implements ActionListener, KeyListener {
         gamePaused = false;
         countdownActive = false;
         musicStarted = false;
+        lastBgLevel = -1;
+        currentBackgroundImage = backgroundImage[0];
 
         switchMode(new BirdMode(birdImage, topPipeImage, bottomPipeImage, customFont));
         gameLoop.start();
@@ -273,9 +371,27 @@ public class Game extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    //The system for opening/closing the tutorial overlay (works at any time except mid-countdown)
+    private void toggleTutorial() {
+        if (countdownActive) return;
+
+        if (!showTutorial) {
+            pausedBeforeTutorial = gamePaused;
+            showTutorial = true;
+            gamePaused = true;
+            stopMusic();
+        } else {
+            showTutorial = false;
+            gamePaused = pausedBeforeTutorial;
+        }
+
+        requestFocusInWindow();
+        repaint();
+    }
+
     //Just for starting the music
     private void startMusic() {
-        if (bgMusic != null) {
+        if (bgMusic != null && settings.musicCheck.isSelected()) {
             bgMusic.loop(Clip.LOOP_CONTINUOUSLY);
         }
     }
