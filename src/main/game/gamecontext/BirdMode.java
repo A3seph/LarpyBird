@@ -18,7 +18,7 @@ public class BirdMode implements GameMode {
     private final Image birdImage;
     private final Image topPipeImage;
     private final Image bottomPipeImage;
-    private final String jumpSoundPath = "/sounds/flappy_sfx.wav";
+    private final String jumpSoundPath = "/sounds/bird_sfx.wav";
 
     //Fonts
     private final Font customFont;
@@ -31,13 +31,12 @@ public class BirdMode implements GameMode {
     private final Random random = new Random();
 
     //Bird width and Height. Pipes Width and Height
-    private final int birdWidth = 34;
-    private final int birdHeight = 24;
+    private final int birdWidth = 45;
+    private final int birdHeight = 50;
     private final int pipeWidth = 64;
     private final int pipeHeight = 512;
 
     //Speed & gravity for the bird and pipes.
-    private int velocityX;
     private int velocityY = 0;
     private final int gravity = 1;
 
@@ -94,6 +93,7 @@ public class BirdMode implements GameMode {
         for (Pipe pipe : pipes) {
             pipe.update(velocityX);
 
+            //Updates every pipes passes through
             if (!pipe.passed && bird.x > pipe.x + pipe.width) {
                 ctx.score += 0.5; // two pipes per pair, 0.5 + 0.5 = 1 point
                 pipe.passed = true;
@@ -103,7 +103,8 @@ public class BirdMode implements GameMode {
                 }
             }
 
-            if (collision(bird, pipe)) {
+            //game over when collides
+            if (bird.getHitbox().intersects(pipe.getHitbox())) {
                 gameOver = true;
             }
         }
@@ -153,14 +154,6 @@ public class BirdMode implements GameMode {
         pipes.add(bottomPipe);
     }
 
-    //Collisions
-    private boolean collision(Bird birdA, Pipe pipeB) {
-        return birdA.x < pipeB.x + pipeB.width &&
-                birdA.x + birdA.width > pipeB.x &&
-                birdA.y < pipeB.y + pipeB.height &&
-                birdA.y + birdA.height > pipeB.y;
-    }
-
     @Override
     public void draw(Graphics2D g, GameContext ctx) {
         g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null);
@@ -171,15 +164,9 @@ public class BirdMode implements GameMode {
 
         g.setColor(Color.black);
         g.setFont(customFont.deriveFont(Font.BOLD, 25f));
+
         if (gameOver) {
-            g.drawString("Game over, skill issue: " + (int) ctx.score, 10, 35);
-            g.setFont(customFont.deriveFont(Font.BOLD, 16f));
-            if ((int) ctx.score >= ctx.highScore) {
-                g.drawString("NEW BEST:", 10, 60);
-            } else {
-                g.drawString("BEST: " + ctx.highScore, 10, 60);
-            }
-            g.drawString("Press SPACE to restart", 10, ctx.boardHeight - 20);
+            drawGameOverLayer(g, ctx);
         } else {
             g.drawString(String.valueOf((int) ctx.score), 10, 35);
             g.setFont(customFont.deriveFont(Font.BOLD, 16f));
@@ -188,8 +175,44 @@ public class BirdMode implements GameMode {
 
         if (!gameStart && !gameOver) {
             g.setFont(customFont.deriveFont(Font.BOLD, 18f));
-            g.drawString("Press SPACE to start", 60, ctx.boardHeight / 2 - 40);
+            g.drawString("Press SPACE to start & press H for tutorial", 60, ctx.boardHeight / 2 - 40);
         }
+    }
+
+    // Centered, layered game-over screen (title / score / best / restart, stacked and centered)
+    private void drawGameOverLayer(Graphics2D g, GameContext ctx) {
+        String title = "GAME OVER (skill issue)";
+        String scoreLine = "Score: " + (int) ctx.score;
+        String bestLine = ((int) ctx.score >= ctx.highScore) ? "NEW BEST!" : "Best: " + ctx.highScore;
+        String restartLine = "Press ENTER to restart";
+
+        int centerX = ctx.boardWidth / 2;
+        int centerY = ctx.boardHeight / 2;
+
+        // Optional dim overlay so the layered text pops
+        g.setColor(new Color(0, 0, 0, 120));
+        g.fillRect(0, 0, ctx.boardWidth, ctx.boardHeight);
+
+        g.setColor(Color.white);
+
+        g.setFont(customFont.deriveFont(Font.BOLD, 26f));
+        FontMetrics titleFm = g.getFontMetrics();
+        int titleX = centerX - titleFm.stringWidth(title) / 2;
+        g.drawString(title, titleX, centerY - 30);
+
+        g.setFont(customFont.deriveFont(Font.BOLD, 18f));
+        FontMetrics scoreFm = g.getFontMetrics();
+        int scoreX = centerX - scoreFm.stringWidth(scoreLine) / 2;
+        g.drawString(scoreLine, scoreX, centerY);
+
+        FontMetrics bestFm = g.getFontMetrics();
+        int bestX = centerX - bestFm.stringWidth(bestLine) / 2;
+        g.drawString(bestLine, bestX, centerY + 25);
+
+        g.setFont(customFont.deriveFont(Font.PLAIN, 14f));
+        FontMetrics restartFm = g.getFontMetrics();
+        int restartX = centerX - restartFm.stringWidth(restartLine) / 2;
+        g.drawString(restartLine, restartX, centerY + 50);
     }
 
     @Override
@@ -209,7 +232,7 @@ public class BirdMode implements GameMode {
     }
 
     private boolean soundEnabled(GameContext ctx) {
-        return ctx.settings == null || ctx.settings.soundCheck.isSelected();
+        return ctx.settings == null || ctx.settings.sfxCheck.isSelected();
     }
 
     @Override
