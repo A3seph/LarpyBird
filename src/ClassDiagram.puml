@@ -1,0 +1,242 @@
+@startuml LarpyBirb_ClassDiagram
+
+' ===================== main =====================
+package "main" {
+    class Main {
+        + {static} main(args : String[]) : void
+    }
+}
+
+' ===================== main.ui =====================
+package "main.ui" {
+    class MainMenu {
+        + playButton : JButton
+        + settingsButton : JButton
+        + aboutButton : JButton
+        + exitButton : JButton
+        + doLayout() : void
+        # paintComponent(g : Graphics) : void
+    }
+
+    class SettingMenu {
+        + backButton : JButton
+        + soundCheck : JCheckBox
+        + doLayout() : void
+        # paintComponent(g : Graphics) : void
+    }
+
+    class AboutMenu {
+        + backButton2 : JButton
+        - {static} DEVELOPERS : DeveloperInfo[]
+        - showDeveloper(developer : DeveloperInfo) : void
+        + doLayout() : void
+        # paintComponent(g : Graphics) : void
+    }
+}
+
+' ===================== main.datastorage =====================
+package "main.datastorage" {
+    class DeveloperInfo {
+        + label : String
+        + imagepath : String
+        + soundPath : String
+        + toString() : String
+    }
+
+    class ImgAndSounds {
+        + name : String
+        + imagePath : String
+        + jumpSoundPath : String
+        + toString() : String
+    }
+
+    class ScoreManager {
+        - {static} highScore : int
+        + {static} getHighScore() : int
+        + {static} updateHighScore(newScore : int) : void
+    }
+
+    package "main.datastorage.audio" {
+        class Sounds {
+            + {static} playSound(resourcePath : String) : void
+            + {static} loadLoopingClip(resourcePath : String) : Clip
+        }
+    }
+}
+
+' ===================== main.entity =====================
+package "main.entity" {
+    interface Obstacle {
+        + update(velocityX : int) : void
+        + draw(g : Graphics2D) : void
+        + getHitbox() : Rectangle
+    }
+
+    class Bird {
+        + x : int
+        + y : int
+        + width : int
+        + height : int
+        + img : Image
+        + getHitbox() : Rectangle
+    }
+
+    class Spider {
+        + x : int
+        + width : int
+        + height : int
+        + img : Image
+        - floorY : int
+        - ceilingY : int
+        - onCeiling : boolean
+        + getY() : int
+        + toggleSurface() : void
+        + isOnCeiling() : boolean
+        + getHitbox() : Rectangle
+    }
+
+    class Pipe {
+        + x : int
+        + y : int
+        + width : int
+        + height : int
+        + img : Image
+        + isTop : boolean
+        + passed : boolean
+        + update(velocityX : int) : void
+        + draw(g : Graphics2D) : void
+        + getHitbox() : Rectangle
+    }
+
+    class Spike {
+        + x : int
+        + y : int
+        + width : int
+        + height : int
+        + onCeiling : boolean
+        + img : Image
+        + update(velocityX : int) : void
+        + draw(g : Graphics2D) : void
+        + getHitbox() : Rectangle
+    }
+
+    Pipe ..|> Obstacle
+    Spike ..|> Obstacle
+}
+
+' ===================== main.game =====================
+package "main.game" {
+    class Game {
+        - gameLoop : Timer
+        - gamePaused : boolean
+        - countdownActive : boolean
+        - musicStarted : boolean
+        - bgMusic : Clip
+        - ctx : GameContext
+        - currentMode : GameMode
+        - settings : SettingMenu
+        + setOnReturnToMenu(r : Runnable) : void
+        - switchMode(newMode : GameMode) : void
+        - resolverForMode(score : double) : GameMode
+        - restart() : void
+        - togglePause() : void
+        + actionPerformed(e : ActionEvent) : void
+        + keyPressed(e : KeyEvent) : void
+    }
+
+    package "main.game.gamecontext" {
+        class GameContext {
+            + boardWidth : int
+            + boardHeight : int
+            + score : double
+            + highScore : int
+            + level : int
+            + started : boolean
+            + settings : SettingMenu
+        }
+
+        interface GameMode {
+            + onEnter(ctx : GameContext) : void
+            + onExit() : void
+            + update(ctx : GameContext) : void
+            + draw(g : Graphics2D, ctx : GameContext) : void
+            + handleKeyPressed(e : KeyEvent, ctx : GameContext) : void
+            + isGameOver() : boolean
+        }
+
+        class BirdMode {
+            - bird : Bird
+            - pipes : ArrayList<Pipe>
+            - gameStart : boolean
+            - gameOver : boolean
+            + onEnter(ctx : GameContext) : void
+            + update(ctx : GameContext) : void
+            + draw(g : Graphics2D, ctx : GameContext) : void
+            + handleKeyPressed(e : KeyEvent, ctx : GameContext) : void
+            - spawnPipesIfDue(ctx : GameContext, levelIndex : int) : void
+            - placePipes(ctx : GameContext, levelIndex : int) : void
+        }
+
+        class SpiderMode {
+            - spider : Spider
+            - obstacles : ArrayList<Obstacle>
+            - gameOver : boolean
+            + onEnter(ctx : GameContext) : void
+            + update(ctx : GameContext) : void
+            + draw(g : Graphics2D, ctx : GameContext) : void
+            + handleKeyPressed(e : KeyEvent, ctx : GameContext) : void
+            - spawnObstacle(ctx : GameContext, levelIndex : int) : void
+            - spawnSpike(ctx : GameContext, onCeiling : boolean) : void
+            - spawnPipeObstacle(ctx : GameContext, onCeiling : boolean, levelIndex : int) : void
+        }
+
+        class Difficulty {
+            + {static} Max_Level : int
+            + {static} Score_Per_Level : int
+            + {static} Mode_Switch_Interval : int
+            + {static} Bird_Speed : int[]
+            + {static} Pipes_Gap_Divisor : int[]
+            + {static} Pipes_Spawn_Interval_Ms : int[]
+            + {static} Pipes_Spawn_Offset : int[]
+            + {static} Spider_Speed : int[]
+            + {static} Spike_Spawn_Interval_Ms : int[]
+            + {static} Pipe_Chances : int[]
+            + {static} levelForScore(score : double) : int
+        }
+
+        BirdMode ..|> GameMode
+        SpiderMode ..|> GameMode
+    }
+}
+
+' ===================== Relationships across packages =====================
+
+' Composition / ownership
+Game "1" *-- "1" GameContext : ctx
+Game "1" o-- "1" GameMode : currentMode
+Game "1" o-- "1" SettingMenu : settings
+GameContext "1" o-- "0..1" SettingMenu : settings
+
+BirdMode "1" *-- "1" Bird : bird
+BirdMode "1" *-- "0..*" Pipe : pipes
+SpiderMode "1" *-- "1" Spider : spider
+SpiderMode "1" *-- "0..*" Obstacle : obstacles
+
+AboutMenu "1" o-- "0..*" DeveloperInfo : DEVELOPERS
+
+' Main wires everything together
+Main ..> Game : creates
+Main ..> MainMenu : creates
+Main ..> SettingMenu : creates
+Main ..> AboutMenu : creates
+
+' Dependencies (uses / calls static methods)
+Game ..> Sounds : uses
+Game ..> ScoreManager : uses
+BirdMode ..> Sounds : uses
+BirdMode ..> Difficulty : uses
+SpiderMode ..> Sounds : uses
+SpiderMode ..> Difficulty : uses
+AboutMenu ..> Sounds : uses
+
+@enduml

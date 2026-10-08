@@ -1,0 +1,37 @@
+@startuml LarpyBirb_UseCaseDiagram
+left to right direction
+
+actor Player
+
+rectangle "Larpy Birb" {
+    usecase "View Main Menu" as UC1
+    usecase "Play Game" as UC2
+    usecase "Jump / Flap (Bird Mode)" as UC3
+    usecase "Switch Surface (Spider Mode)" as UC4
+    usecase "Pause Game" as UC5
+    usecase "Resume Game (Countdown)" as UC6
+    usecase "Restart Game" as UC7
+    usecase "Return to Main Menu" as UC8
+    usecase "Adjust Settings" as UC9
+    usecase "Toggle Sound On/Off" as UC10
+    usecase "View About / Developers" as UC11
+    usecase "Hear Developer Sound Clip" as UC12
+    usecase "Exit Game" as UC13
+}
+
+Player --> UC1
+Player --> UC2
+Player --> UC5
+Player --> UC7
+Player --> UC8
+Player --> UC9
+Player --> UC11
+Player --> UC13
+
+UC2 .> UC3 : <<include>>
+UC2 .> UC4 : <<include>>
+UC5 .> UC6 : <<extend>>
+UC9 .> UC10 : <<include>>
+UC11 .> UC12 : <<extend>>
+
+@enduml
